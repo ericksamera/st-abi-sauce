@@ -12,7 +12,7 @@ import streamlit_ext as ste
 import pandas as pd
 # --------------------------------------------------
 import plotly.graph_objects as go
-from math import ceil
+import math
 from Bio import SeqIO
 from datetime import datetime
 import zipfile
@@ -33,6 +33,7 @@ class App:
         st.set_page_config(
             page_title=f"abi-sauce | {title}",
             page_icon=':apple:',
+            layout='wide',
             initial_sidebar_state='collapsed')
         st.title('sanger-sequence-trim')
         st.markdown('This script is intended for processing a `.ab1` files into Mott algorithm-trimmed FASTAs.')
@@ -85,7 +86,7 @@ class App:
                 with st.spinner('Trimming...'):
                     time.sleep(0.5)
                 form_instance.empty()
-                #self._init_dataframe(self._loaded_abi_files)
+                
                 button = ste.download_button(
                     label="Download ZIP",
                     data=buffer,
@@ -93,9 +94,10 @@ class App:
                 )
 
                 expanders = {}
+                self._init_dataframe(self._loaded_abi_files)
                 for i, file_instance in enumerate(self._loaded_abi_files):
-                    #expander_label_loaded_abi_files
-                    expanders[i] = st.expander(file_instance)
+                    expander_text = f"Show plot: {file_instance}"
+                    expanders[i] = st.expander(expander_text)
                     #expanders[i].write(self._loaded_abi_files[file_instance])
                     if expanders[i].expanded:
                         expanders[i].plotly_chart(self._plot(self._loaded_abi_files[file_instance]), use_container_width=True)
@@ -126,8 +128,11 @@ class App:
     def _plot(self, seq_object_dict: dict):
         """
         """
-
         raw_annotations = seq_object_dict['_raw'].annotations['abif_raw']
+        #trim_annotations = seq_object_dict['_trimmed'].annotations['abif_raw']
+        left_trim = raw_annotations['PLOC2'][seq_object_dict['left_trim']] - raw_annotations['SPAC3']/2
+        right_trim = raw_annotations['PLOC2'][-seq_object_dict['right_trim']] + raw_annotations['SPAC3']/2
+        
         phred_scores = seq_object_dict['_raw'].letter_annotations['phred_quality']
         nucleotide_plots = {
             'A': {
@@ -156,30 +161,25 @@ class App:
             'highlight_height': max_peak_height+50
         }
 
-        half_dists: list = []
-        position_list = [0] + list(raw_annotations['PLOC2']) + [len(raw_annotations['PLOC2'])]
-        for i, val in enumerate(position_list):
-            if i < len(position_list) - 1:
-                half_width = ceil(abs(val - position_list[i + 1])/2)
-                half_dists+=[half_width]*2
-
         fig = go.Figure()
-
         fig.add_trace(
             go.Bar(
-            x=raw_annotations['PLOC2'], 
-            y=[relative_heights['highlight_height']*(score/60) for score in phred_scores],
+            #x=[math.ceil(positions-(widths/2)) for widths, positions in zip(adjusted_dists,raw_annotations['PLOC2'])],
+            x=raw_annotations['PLOC2'],
+            y=[(5/6)*(relative_heights['highlight_height'])*(score/60) for score in phred_scores],
+            hoverinfo='skip',
             name='Phred scores',
-            width=[raw_annotations['SPAC3'] for val in raw_annotations['PLOC2']],
-            xperiodalignment='start',
+            width=raw_annotations['SPAC3'],
             marker=dict(
-                color='#88ccee'
+                color='#88ccee',
+                opacity=0.3,
                 )
             ))
         fig.add_trace(
             go.Scatter(
                 x=raw_annotations['PLOC2'],
                 y=[relative_heights['basecall_height'] for i in raw_annotations['PLOC2']],
+                hoverinfo='skip',
                 name='Nucleotides',
                 text=list(char for char in raw_annotations['PBAS2'].decode()),
                 mode="text",
@@ -187,6 +187,17 @@ class App:
                     'color': [nucleotide_plots[char]['color'] if char in nucleotide_plots else '#ff3aff' for char in raw_annotations['PBAS2'].decode()]
                 },
             ))
+        fig.add_vline(
+            x=left_trim,
+            line_width=2,
+            fillcolor='#88ccee',
+            opacity=0.5)
+        fig.add_vline(
+            x=right_trim,
+            line_width=2,
+            fillcolor='#88ccee',
+            opacity=0.5)
+
 
         for nuc, values in nucleotide_plots.items():
             fig.add_trace(
@@ -201,12 +212,11 @@ class App:
 
         fig.update_layout(
             dragmode='pan',
-            xaxis=dict(rangeslider=dict(visible=True, thickness=0.25), tickvals=[None], range=[0, raw_annotations['SPAC3']*25], constrain='domain'),
+            xaxis=dict(rangeslider=dict(visible=True, thickness=0.25), tickvals=[None], range=[left_trim-(10*raw_annotations['SPAC3']), right_trim+(10*raw_annotations['SPAC3'])], constrain='domain'),
             yaxis=dict(fixedrange=True, tickvals=[None], range=[0, relative_heights['screen_height']]),
             legend=dict(itemclick=False, itemdoubleclick=False))
 
         return fig
-
     def _init_dataframe(self, _abi_data) -> None:
         """
         Function instantiates the DataFrame for a given set of input sequences.
