@@ -223,5 +223,5 @@ class App:
         st.plotly_chart(fig, use_container_width=True)
 # --------------------------------------------------
 if __name__=="__main__":
-    ct = App()
-    ct._init_page()
+    streamlit_app = App()
+    streamlit_app._init_page()
