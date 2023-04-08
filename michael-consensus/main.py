@@ -183,7 +183,7 @@ class App:
                 coloraxis = "coloraxis"),
                 row=2, col=1)
 
-        for nucleotide, trace_color in zip('ACGT', ['#64f73f', '#ffb340', '#eb413c', '#3c88ee']):
+        for nucleotide, trace_color in zip(['A', 'C', 'G', 'T', 'ambiguous'], ['#64f73f', '#ffb340', '#eb413c', '#3c88ee', '#a800ff']):
             fig.add_trace(go.Scatter(
                     x=[None],
                     y=[None],
