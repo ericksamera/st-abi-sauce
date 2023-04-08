@@ -8,6 +8,7 @@ __version__ = "1.0.0"
 __comments__ = "stable enough"
 # --------------------------------------------------
 import streamlit as st
+import streamlit_ext as ste
 import pandas as pd
 from pathlib import Path
 # --------------------------------------------------
@@ -15,6 +16,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from Bio.Seq import Seq
 from Bio import AlignIO, SeqIO
+from Bio.SeqRecord import SeqRecord
 from collections import Counter
 from io import StringIO
 import subprocess
@@ -95,6 +97,7 @@ class App:
         aln_text = [[char for char in seq_object.seq.upper()] for seq_object in SeqIO.parse(Path(__file__).parent.joinpath('temp-aligned.fasta'),'fasta')]
 
 
+
         seq_ids = [seq.id for seq in SeqIO.parse(Path(__file__).parent.joinpath('temp-aligned.fasta'),'fasta')]
 
         consensus_height = 50
@@ -135,9 +138,6 @@ class App:
                             row_heights=[consensus_height, alignment_height]
                             )
 
-
-        
-
         fig.add_trace(go.Heatmap(
                 z=consensus_vals,
                 zmin=0,
@@ -177,7 +177,24 @@ class App:
             legend=dict(itemclick=False))
         fig.update_coloraxes(showscale=False)
 
+        with st.expander('Show consensus sequence (gapped) in FASTA format', expanded=False):
+            st.code(
+                SeqRecord(
+                    Seq(''.join(consensus_chars[0])),
+                    id='Consensus (gapped)',
+                    description='',).format('fasta'),
+                line_numbers=True)
+        with st.expander('Show consensus sequence in FASTA format', expanded=False):
+            st.code(
+                SeqRecord(
+                    Seq(''.join(consensus_chars[0]).replace('-', '')),
+                    id='Consensus',
+                    description='',).format('fasta'),
+                line_numbers=True)
+        _alignment_str_to_file = '\n'.join([seq.format('fasta') for seq in SeqIO.parse(Path(__file__).parent.joinpath('temp-aligned.fasta'), 'fasta')])
+        ste.download_button('Download multiple-sequence alignment (MSA)', _alignment_str_to_file, file_name='alignment.fasta')
         st.plotly_chart(fig, use_container_width=True)
+        
 # --------------------------------------------------
 if __name__=="__main__":
     ct = App()
