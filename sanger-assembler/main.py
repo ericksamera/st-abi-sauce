@@ -70,14 +70,15 @@ class App:
                     'Trimming stringency', 
                     ['0: No trimming', '1: LEAST', '2', '3', '4', '5', '6', '7', '8', '9: MOST',],
                     index=4)
+                pratio_var = st.slider('Peak ratio (to call primary and secondary bases)', 0, 100, 33, 5, help='HelpText')
             with col3:
                 upload_reference: list = st.file_uploader(
-                    'Upload `.fasta` files.',
-                    type=['.ab1'],
+                    'To use reference-based assembly, upload a reference `.fasta`.',
+                    type=['.fasta'],
                     accept_multiple_files=False)
 
             uploaded_files: list = st.file_uploader(
-                'Upload `.fasta` files.',
+                'Upload `.ab1` files to assemble.',
                 type=['.ab1'],
                 accept_multiple_files=True)
 
