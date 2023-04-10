@@ -131,3 +131,7 @@ dmypy.json
 # Test files
 **/*.fasta
 **/*.ab1
+sanger-assembler/*.fa
+sanger-assembler/*.fq
+sanger-assembler/*.json
+sanger-assembler/*.vertical
