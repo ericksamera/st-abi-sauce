@@ -169,7 +169,7 @@ class App:
             y=[(5/6)*(relative_heights['highlight_height'])*(score/60) for score in phred_scores],
             hoverinfo='skip',
             name='Phred scores',
-            width=raw_annotations['SPAC3'],
+            width=abs(raw_annotations['SPAC3']),
             marker=dict(
                 color='#88ccee',
                 opacity=0.3,
@@ -187,17 +187,20 @@ class App:
                     'color': [nucleotide_plots[char]['color'] if char in nucleotide_plots else '#ff3aff' for char in raw_annotations['PBAS2'].decode()]
                 },
             ))
-        fig.add_vline(
-            x=left_trim,
-            line_width=2,
-            fillcolor='#88ccee',
-            opacity=0.5)
-        fig.add_vline(
-            x=right_trim,
-            line_width=2,
-            fillcolor='#88ccee',
-            opacity=0.5)
-
+        
+        print(seq_object_dict['_raw'].seq)
+        if str(seq_object_dict['_raw'].seq) != 'NNNNN':
+            
+            fig.add_vline(
+                x=left_trim,
+                line_width=2,
+                fillcolor='#88ccee',
+                opacity=0.5)
+            fig.add_vline(
+                x=right_trim,
+                line_width=2,
+                fillcolor='#88ccee',
+                opacity=0.5)
 
         for nuc, values in nucleotide_plots.items():
             fig.add_trace(
