@@ -4,7 +4,7 @@ __description__ =\
 Purpose: Streamlit wrapper for sanger-sequence-trim.
 """
 __author__ = "Erick Samera"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __comments__ = "stable enough"
 # --------------------------------------------------
 import streamlit as st
@@ -165,17 +165,16 @@ class App:
         if not st.session_state.CONCATENATE:
             with io.BytesIO() as file_buffer:
                 with zipfile.ZipFile(file_buffer, "w") as zip:
-                    fasta_string: str = ''
                     for seq_object in st.session_state.PROCESSED_FILES.values():
                         fasta_string = seq_object[st.session_state.TRIM_STR].format("fasta")
                         zip.writestr(f"{seq_object['name']}.fasta", fasta_string)
                 file_buffer.seek(0)
                 return ('zip', file_buffer.getbuffer().tobytes())
         else:
-            with io.StringIO() as file_buffer:
-                for seq_object in st.session_state.PROCESSED_FILES.values():
-                    file_buffer.write(seq_object[st.session_state.TRIM_STR].format("fasta"))
-                return ('txt', str(file_buffer).encode())
+            fasta_string: str = ''
+            for seq_object in st.session_state.PROCESSED_FILES.values():
+                fasta_string += seq_object[st.session_state.TRIM_STR].format("fasta")
+            return ('txt', str.encode(fasta_string))
     def _plot_electropherogram(self, _seq_object_dict):
         """
         """
@@ -269,7 +268,8 @@ class App:
 
         return fig
     def _update_plot_window(self):
-        """"""
+        """
+        """
         st.header(f"{st.session_state.SELECTED_TRACE}")
         st.text(f"{st.session_state.PROCESSED_FILES[f'{st.session_state.SELECTED_TRACE}.ab1']['_raw'].id}")
         st.plotly_chart(
