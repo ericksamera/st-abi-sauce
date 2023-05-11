@@ -4,7 +4,7 @@ __description__ =\
 Purpose: Streamlit wrapper for sanger-sequence-trim.
 """
 __author__ = "Erick Samera"
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 __comments__ = "stable enough"
 # --------------------------------------------------
 import streamlit as st
@@ -109,7 +109,10 @@ class App:
             with st.expander('Advanced options'):
                 st.session_state.TRIM: bool = st.checkbox("Trim sequences using Mott's trimming algorithm.", value=True)
             submit_button = st.form_submit_button("Process files", on_click=self._upload_files, args=(uploaded_files,))
-    def _upload_files(self, _st_uploaded_files: list) -> None: 
+            if submit_button and not uploaded_files:
+                st.error('Select some files!')
+    def _upload_files(self, _st_uploaded_files: list) -> None:
+        if not _st_uploaded_files: return None
         st.session_state.UPLOADED_FILES = _st_uploaded_files
         st.session_state.TRIM_STR = '_trimmed' if st.session_state.TRIM else '_raw'
         st.session_state.PROCESSED_FILES = self._process_files(_st_uploaded_files)
@@ -221,12 +224,12 @@ class App:
             name='Phred scores',
             width=abs(raw_annotations['SPAC3']),
             marker=dict(
-                color='#88ccee',
-                opacity=0.3,
+                color='#DFF0FA',
+                opacity=1,
                 ),
             ))
         fig.add_trace(
-            go.Scatter(
+            go.Scattergl(
                 x=raw_annotations['PLOC2'],
                 y=[relative_heights['basecall_height'] for i in raw_annotations['PLOC2']],
                 hoverinfo='skip',
@@ -252,7 +255,7 @@ class App:
 
         for nuc, values in nucleotide_plots.items():
             fig.add_trace(
-                go.Scatter(
+                go.Scattergl(
                     y=values['peaks'],
                     hoverinfo='skip',
                     line=dict(width=1),
@@ -263,7 +266,7 @@ class App:
 
         fig.update_layout(
             dragmode='pan',
-            xaxis=dict(rangeslider=dict(visible=True, thickness=0.25), tickvals=[None], range=[left_trim-(10*raw_annotations['SPAC3']), right_trim+(10*raw_annotations['SPAC3'])], constrain='domain'),
+            xaxis=dict(rangeslider=dict(visible=True, thickness=0.1), tickvals=[None], range=[left_trim-(10*raw_annotations['SPAC3']), right_trim+(10*raw_annotations['SPAC3'])], constrain='domain'),
             yaxis=dict(fixedrange=True, tickvals=[None], range=[0, relative_heights['screen_height']]))
 
         return fig
